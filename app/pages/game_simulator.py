@@ -6,8 +6,9 @@ class Player:
         self.name = name
         self.probabilities = np.array(probabilities)  # [単打, 二塁打, 三塁打, 本塁打, 四死球, アウト]
         self.hits = 0  # ヒット数
-        self.at_bats = 0  # 打席数
+        self.at_bats = 0  # 打数
         self.walks = 0  # 四死球数
+        self.daseki = 0 # 打席数
         self.runs_batted_in = 0  # 打点
         self.singles = 0  # 単打数
         self.doubles = 0  # 二塁打数
@@ -20,8 +21,9 @@ class Player:
         outcome = np.random.choice([
             "single", "double", "triple", "homerun", "walk", "out"
         ], p=self.probabilities)
-
-        # 打席数の更新 (四死球は除く)
+        
+        self.daseki += 1
+        # 打数の更新 (四死球は除く)
         if outcome != "walk":
             self.at_bats += 1
 
@@ -57,8 +59,7 @@ class Player:
 
     def on_base_percentage(self):
         # 出塁率 = (ヒット数 + 四死球数) / 総打席数
-        total_plate_appearances = self.at_bats + self.walks
-        return (self.hits + self.walks) / total_plate_appearances if total_plate_appearances > 0 else 0
+        return (self.hits + self.walks) / self.daseki if self.daseki > 0 else 0
 
     def sllugging_percentage(self):
         # 長打率＝（ヒット数＋二塁打＊2＋三塁打＊3＋本塁打＊4）/ 打数
@@ -70,11 +71,13 @@ class Player:
     def detailed_stats(self):
         # 詳細成績を返す
         return {
+            "安打":self.hits,
             "単打": self.singles,
             "二塁打": self.doubles,
             "三塁打": self.triples,
             "本塁打": self.homeruns,
-            "打席数": self.at_bats,
+            "打数": self.at_bats,
+            "打席数":self.daseki,
             "四死球": self.walks
         }
 
@@ -84,7 +87,7 @@ def simulate_game(players):
     score = 0
     game_log = []  # 試合の流れを記録
 
-    for inning in range(9):  # 9回までシミュレーション
+    for inning in range(8):  # 9回までシミュレーション
         outs = 0
         bases = np.zeros(3, dtype=int)  # 塁の状態を保持 [一塁, 二塁, 三塁]
         inning_log = []
@@ -97,24 +100,84 @@ def simulate_game(players):
             if result == "アウト":
                 outs += 1
             else:
-                advance = {"単打": 1, "二塁打": 2, "三塁打": 3, "本塁打": 4, "四死球": 0}[result]
+                advance = {"単打": 1, "二塁打": 2, "三塁打": 3, "本塁打": 4, "四死球": 1}[result]
                 runs = 0
 
-                # ランナーを進塁させる
-                for i in range(2, -1, -1):
-                    if bases[i] == 1:
-                        if i + advance >= 3:  # ホームイン
-                            runs += 1
-                            bases[i] = 0
-                        else:
-                            bases[i + advance] = 1
-                            bases[i] = 0
+                # # 3塁ランナー
+                # if bases[2]==1:
+                #     if result=='四死球':
+                #         if bases[1]==1 & bases[0]==1: runs +=1
+                #         #else:continue
+                #     else:
+                #         runs +=1
+                #         bases[2]=0
 
-                # 打者の進塁を処理
-                if advance < 4:
-                    bases[advance - 1] = 1
-                else:  # 本塁打
-                    runs += 1
+                # # 2塁ランナー
+                # if bases[1]==1:
+                #     if result=='単打':
+                #         bases[2]==1
+                #     elif result=='四死球':
+                #         if bases[0]==1:
+                #             bases[2]==1
+                #         #else: continue
+                #     else:runs+=1
+
+                # # 1塁ランナー
+                # if bases[0]==1:
+                #     if result=='単打' or result=="四死球":
+                #         bases[1]==1
+                #     elif result=="2塁打":
+                #         bases[2]==1
+                #     else:runs+=1
+
+                # # 打者
+                # if advance < 4:
+                #     bases[advance - 1] = 1
+                # else:  # 本塁打
+                #     runs += 1
+
+                # 満塁時の四死球処理
+                if result == "四死球" and all(bases):  # 全ての塁が埋まっている場合
+                    runs += 1  # 三塁ランナーがホームイン
+                    bases[2] = bases[1]  # 2塁ランナーが3塁へ
+                    bases[1] = bases[0]  # 1塁ランナーが2塁へ
+                    bases[0] = 1  # 打者が1塁へ
+                else:
+                    # ランナー進塁と得点の計算
+                    # 3塁ランナーの処理
+                    if bases[2] == 1:
+                        if result in ["単打", "二塁打", "三塁打", "本塁打"]:
+                            runs += 1
+                            bases[2] = 0
+
+                    # 2塁ランナーの処理
+                    if bases[1] == 1:
+                        if advance >= 2:
+                            runs += 1
+                            bases[1] = 0
+                        #elif advance == 1:
+                        else:
+                            bases[2] = 1
+                            bases[1] = 0
+
+                    # 1塁ランナーの処理
+                    if bases[0] == 1:
+                        if advance >= 3:
+                            runs += 1
+                            bases[0] = 0
+                        elif advance == 2:
+                            bases[2] = 1
+                            bases[0] = 0
+                        elif advance == 1:
+                            bases[1] = 1
+                            bases[0] = 0
+
+                    # 打者の処理
+                    if advance < 4:
+                        bases[advance - 1] = 1
+                    else:  # 本塁打
+                        runs += 1
+
 
                 # スコアを更新し打点を記録
                 score += runs
