@@ -41,8 +41,10 @@ def get_data():
     df.to_csv("data/lotte_2024.csv",index=False)
 
 #get_data()
-def pre_data():
-    df = pd.read_csv("data/lotte_2024.csv")
+def pre_data(team):
+    path_team = {"M":"data/lotte_2024.csv"}
+
+    df = pd.read_csv(path_team[team])
 
     df_filt = df[df["打席"]>=100]
     df_filt = df_filt[["名前","打席","打数","安打","２Ｂ","３Ｂ","本塁","打点","四球","敬遠","死球"]]

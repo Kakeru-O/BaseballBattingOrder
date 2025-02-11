@@ -55,15 +55,15 @@ class Player:
 
     def batting_average(self):
         # 打率 = ヒット数 / 打数
-        return self.hits / self.at_bats if self.at_bats > 0 else 0
+        return self.hits / self.at_bats if self.at_bats > 0 else 0.
 
     def on_base_percentage(self):
         # 出塁率 = (ヒット数 + 四死球数) / 総打席数
-        return (self.hits + self.walks) / self.daseki if self.daseki > 0 else 0
+        return (self.hits + self.walks) / self.daseki if self.daseki > 0 else 0.
 
     def sllugging_percentage(self):
         # 長打率＝（ヒット数＋二塁打＊2＋三塁打＊3＋本塁打＊4）/ 打数
-        return self.sllugging / self.at_bats if self.at_bats > 0 else 0
+        return self.sllugging / self.at_bats if self.at_bats > 0 else 0.
     
     def ops(self):
         return self.on_base_percentage() + self.sllugging_percentage()
@@ -95,46 +95,12 @@ def simulate_game(players):
         while outs < 3:
             player = lineup.pop(0)  # 打者を順番に取り出す
             result = player.simulate_at_bat()
-            inning_log.append((player.name, result))
 
             if result == "アウト":
                 outs += 1
             else:
                 advance = {"単打": 1, "二塁打": 2, "三塁打": 3, "本塁打": 4, "四死球": 1}[result]
                 runs = 0
-
-                # # 3塁ランナー
-                # if bases[2]==1:
-                #     if result=='四死球':
-                #         if bases[1]==1 & bases[0]==1: runs +=1
-                #         #else:continue
-                #     else:
-                #         runs +=1
-                #         bases[2]=0
-
-                # # 2塁ランナー
-                # if bases[1]==1:
-                #     if result=='単打':
-                #         bases[2]==1
-                #     elif result=='四死球':
-                #         if bases[0]==1:
-                #             bases[2]==1
-                #         #else: continue
-                #     else:runs+=1
-
-                # # 1塁ランナー
-                # if bases[0]==1:
-                #     if result=='単打' or result=="四死球":
-                #         bases[1]==1
-                #     elif result=="2塁打":
-                #         bases[2]==1
-                #     else:runs+=1
-
-                # # 打者
-                # if advance < 4:
-                #     bases[advance - 1] = 1
-                # else:  # 本塁打
-                #     runs += 1
 
                 # 満塁時の四死球処理
                 if result == "四死球" and all(bases):  # 全ての塁が埋まっている場合
@@ -182,6 +148,12 @@ def simulate_game(players):
                 # スコアを更新し打点を記録
                 score += runs
                 player.runs_batted_in += runs
+
+                # 打点も記録する
+                if runs>0:
+                    result = result+str(runs)
+                
+            inning_log.append((player.name, result))
 
             lineup.append(player)  # 打者を打順の最後に戻す
 

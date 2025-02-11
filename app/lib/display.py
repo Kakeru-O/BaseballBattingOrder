@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+# 小数点以下3桁で表示するフォーマットを設定
+pd.options.display.float_format = '{:.2f}'.format
+
 # 各選手の成績をデータフレームで表示
 def diplay_stats(players):
     player_stats = {
@@ -70,4 +73,5 @@ def diplay_stats(players):
     player_stats_df = pd.concat([player_stats_df, pd.DataFrame([totals])], ignore_index=True)
 
     player_stats_df.set_index(["名前"],inplace=True)
+    
     return player_stats_df
