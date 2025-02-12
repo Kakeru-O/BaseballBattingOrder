@@ -12,7 +12,7 @@ def one_game(players):
     st.subheader("1試合のシミュレーション")
 
     # 試合をシミュレート
-    score, game_log = gs.simulate_game(players)
+    score, game_log = gs.simulate_game_1(players)
     st.write(f"最終スコア: {score}")
 
     # イニングごとの詳細をデータフレームで表示

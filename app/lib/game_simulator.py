@@ -82,7 +82,7 @@ class Player:
         }
 
 
-def simulate_game(players):
+def simulate_game_1(players):
     lineup = players[:]
     score = 0
     game_log = []  # 試合の流れを記録
@@ -161,3 +161,71 @@ def simulate_game(players):
 
     return score, game_log
 
+
+def simulate_game(players):
+    lineup = players[:]
+    score = 0
+
+    for inning in range(8):  # 9回までシミュレーション
+        outs = 0
+        bases = np.zeros(3, dtype=int)  # 塁の状態を保持 [一塁, 二塁, 三塁]
+
+        while outs < 3:
+            player = lineup.pop(0)  # 打者を順番に取り出す
+            result = player.simulate_at_bat()
+
+            if result == "アウト":
+                outs += 1
+            else:
+                advance = {"単打": 1, "二塁打": 2, "三塁打": 3, "本塁打": 4, "四死球": 1}[result]
+                runs = 0
+
+                # 満塁時の四死球処理
+                if result == "四死球" and all(bases):  # 全ての塁が埋まっている場合
+                    runs += 1  # 三塁ランナーがホームイン
+                    bases[2] = bases[1]  # 2塁ランナーが3塁へ
+                    bases[1] = bases[0]  # 1塁ランナーが2塁へ
+                    bases[0] = 1  # 打者が1塁へ
+                else:
+                    # ランナー進塁と得点の計算
+                    # 3塁ランナーの処理
+                    if bases[2] == 1:
+                        if result in ["単打", "二塁打", "三塁打", "本塁打"]:
+                            runs += 1
+                            bases[2] = 0
+
+                    # 2塁ランナーの処理
+                    if bases[1] == 1:
+                        if advance >= 2:
+                            runs += 1
+                            bases[1] = 0
+                        #elif advance == 1:
+                        else:
+                            bases[2] = 1
+                            bases[1] = 0
+
+                    # 1塁ランナーの処理
+                    if bases[0] == 1:
+                        if advance >= 3:
+                            runs += 1
+                            bases[0] = 0
+                        elif advance == 2:
+                            bases[2] = 1
+                            bases[0] = 0
+                        elif advance == 1:
+                            bases[1] = 1
+                            bases[0] = 0
+
+                    # 打者の処理
+                    if advance < 4:
+                        bases[advance - 1] = 1
+                    else:  # 本塁打
+                        runs += 1
+
+                # スコアを更新し打点を記録
+                score += runs
+                player.runs_batted_in += runs
+
+            lineup.append(player)  # 打者を打順の最後に戻す
+
+    return score
