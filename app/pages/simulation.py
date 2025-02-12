@@ -5,6 +5,10 @@ import importlib
 import streamlit as st
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
+#import matplotlib.pyplot as plt
+import seaborn as sns
 
 import lib.game_simulator as gs
 importlib.reload(gs)
@@ -51,11 +55,12 @@ if st.button("ランダムシミュレーションを開始"):
     # リストに変換
     orders = [list(order) for order in unique_orders]
 
-
     # スコアを記録
     results = []
 
-    #for order in batting_orders:
+    # 得点との相関を調べる
+    df_res = pd.DataFrame(columns=["打席数","打数","安打","単打","二塁打","三塁打","本塁打","四死球","打率","出塁率","長打率","OPS","打点",])
+    
     for order in orders:
         
         # プレイヤーオブジェクトをリセット
@@ -65,14 +70,16 @@ if st.button("ランダムシミュレーションを開始"):
         # 試合をシミュレーション
         total_score = 0
         for i in range(n_games*n_traial):
-            score, game_log = gs.simulate_game(order)
+            score = gs.simulate_game(order)
             total_score += score
-        #score, _ = gs.simulate_game(order)
+        
         stats = display.diplay_stats(order)
         columns_to_divide = stats.columns.difference(["名前","打率","長打率","出塁率","OPS"])
         stats[columns_to_divide] = (stats[columns_to_divide] / n_traial).round()
         total_score = round(total_score/n_traial)
         results.append((total_score, order,stats))
+
+        df_res = pd.concat([df_res,stats.iloc[9:,:].reset_index(drop=True)],axis=0)
 
     # 一番得点が高かった打順とその詳細
     best_score, best_order,best_stats = max(results, key=lambda x: x[0])
@@ -89,3 +96,55 @@ if st.button("ランダムシミュレーションを開始"):
     st.write(worst_score)
     st.dataframe(worst_stats,use_container_width=True)
 
+    st.dataframe(df_res)
+    # 相関行列を計算
+    correlation_matrix = df_res.corr()
+
+    # col1と最も相関の強い列を特定
+    col1_corr = correlation_matrix['打点'].drop('打点')
+    most_correlated_col = col1_corr.idxmax()
+    max_correlation_value = col1_corr.max()
+
+    # ヒートマップを作成
+    heatmap = go.Figure(data=go.Heatmap(
+        z=correlation_matrix.values,
+        x=correlation_matrix.columns,
+        #y=list(reversed(correlation_matrix.columns)),
+        y=correlation_matrix.columns,
+        colorscale=[
+            [0.0, "red"],
+            [.5, "rgba(255,255,255,1)"],
+            [1.0, "green"]
+        ],
+        zmin=-1, zmax=1
+    ))
+    heatmap.update_yaxes(autorange='reversed')
+    heatmap.update_layout(title="Correlation Matrix Heatmap")
+
+    # Streamlitアプリケーション
+    st.title("Correlation Analysis")
+
+    # ヒートマップの表示
+    st.subheader("Correlation Matrix Heatmap")
+    st.plotly_chart(heatmap)
+
+    # col1と最も相関の強い列を表示
+    st.subheader("Most Correlated Column with col1")
+    st.write(f"Most correlated column: {most_correlated_col}")
+    st.write(f"Correlation value: {max_correlation_value:.4f}")
+
+
+    # 散布図行列を表示
+    st.subheader("Scatter Plot Matrix with Histograms")
+    scatter_matrix = px.scatter_matrix(
+        df_res,
+        dimensions=df_res.columns,
+        title="Scatter Plot Matrix with Histograms",
+        template="plotly",
+        labels={col: col for col in df_res.columns}
+    )
+    scatter_matrix.update_traces(diagonal_visible=True)
+    st.plotly_chart(scatter_matrix)
+
+    #sns.pairplot(df_res)
+    st.pyplot(sns.pairplot(df_res))
