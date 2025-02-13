@@ -1,9 +1,11 @@
+import os
 import requests
 import urllib  #HTMLにアクセス＆取得
 from bs4 import BeautifulSoup #HTMLからデータ抽出
 import pandas as pd
 import numpy as np
 import streamlit as st
+
 # st.set_page_config(layout="wide")
 
 def get_data():
@@ -42,9 +44,14 @@ def get_data():
 
 #get_data()
 def pre_data(team):
-    path_team = {"M":"data/lotte_2024.csv"}
+    # 現在のスクリプトのディレクトリを取得
+    current_dir = os.path.dirname(__file__)
 
-    df = pd.read_csv(path_team[team])
+    # CSVファイルのパスを指定
+    path_team = {"M":"../data/lotte_2024.csv"}
+    csv_path = os.path.join(current_dir, path_team[team])
+
+    df = pd.read_csv(csv_path)
 
     df_filt = df[df["打席"]>=100]
     df_filt = df_filt[["名前","打席","打数","安打","２Ｂ","３Ｂ","本塁","打点","四球","敬遠","死球"]]
