@@ -25,7 +25,7 @@ importlib.reload(get_data)
 Player = gs.Player
 ss = st.session_state
 
-
+st.title("最適打順シミュレーション")
 
 # 選択した打順に基づいてPlayerインスタンスを作成
 players = [
@@ -39,7 +39,7 @@ players = [
 n_traial = 3
 
 # 試す打順数
-n_order = st.selectbox("",[10,20,50,100],index=2)
+n_order = st.selectbox("何通りの打順を試すか選択する",[10,20,50,100],index=2)
 
 if st.button("ランダムシミュレーションを開始"):
     n_games = 143
@@ -96,7 +96,7 @@ if st.button("ランダムシミュレーションを開始"):
     st.write(worst_score)
     st.dataframe(worst_stats,use_container_width=True)
 
-    st.dataframe(df_res)
+    # 得点との相関
     # 相関行列を計算
     correlation_matrix = df_res.corr()
 
@@ -119,32 +119,33 @@ if st.button("ランダムシミュレーションを開始"):
         zmin=-1, zmax=1
     ))
     heatmap.update_yaxes(autorange='reversed')
-    heatmap.update_layout(title="Correlation Matrix Heatmap")
+    #heatmap.update_layout(title="Correlation Matrix Heatmap",)
 
-    # Streamlitアプリケーション
-    st.title("Correlation Analysis")
+    
+    st.subheader("得点との相関")
 
     # ヒートマップの表示
     st.subheader("Correlation Matrix Heatmap")
     st.plotly_chart(heatmap)
 
     # col1と最も相関の強い列を表示
-    st.subheader("Most Correlated Column with col1")
+    st.subheader("Most Correlated Column with 打点")
     st.write(f"Most correlated column: {most_correlated_col}")
     st.write(f"Correlation value: {max_correlation_value:.4f}")
 
 
     # 散布図行列を表示
-    st.subheader("Scatter Plot Matrix with Histograms")
+    st.subheader("Scatter Plot Matrix")
     scatter_matrix = px.scatter_matrix(
         df_res,
         dimensions=df_res.columns,
-        title="Scatter Plot Matrix with Histograms",
+        #title="Scatter Plot Matrix",
         template="plotly",
         labels={col: col for col in df_res.columns}
     )
+
     scatter_matrix.update_traces(diagonal_visible=True)
     st.plotly_chart(scatter_matrix)
 
-    #sns.pairplot(df_res)
-    st.pyplot(sns.pairplot(df_res))
+    # #sns.pairplot(df_res)
+    # st.pyplot(sns.pairplot(df_res))
