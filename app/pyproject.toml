@@ -3,7 +3,7 @@ name = "env-bb"
 version = "0.1.0"
 description = ""
 authors = ["Kakeru-O <soarpushcut@gmail.com>"]
-readme = "README.md"
+readme = "../README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
